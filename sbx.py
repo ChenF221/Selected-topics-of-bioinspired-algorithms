@@ -1,6 +1,6 @@
 import numpy as np
 
-""" Cruzamiento SBX(SIMULATED BINARY CROSSOVER)"""
+""" Cruzamiento SBX(SIMULATED BINARY CROSSOVER) """
 def crossover_SBX(parents, lb, ub, Np, Nvar, Pc, Nc):
     Hijos = np.zeros((Np, Nvar))
 
