@@ -30,11 +30,11 @@ def langermann(x, m=5, a=None, b=None, c=None):
     result = 0
     for i in range(m):
         dist = (x1 - a[i]) ** 2 + (x2 - b[i]) ** 2
-        result += (-c[i]) * np.exp(-dist / np.pi) * np.cos(np.pi * dist)
+        result += c[i] * np.exp(-dist / np.pi) * np.cos(np.pi * dist)
     
-    return result
+    return -result
 
-# Ejemplo de uso
-x = [2.5, 3.5]
+
+x = [2, 1]
 resultado = langermann(x)
-print("Resultado de la función Langermann en", x, "es:", resultado)
+print(f"Resultado de la función Langermann en {x} es: {resultado:.12f}")
