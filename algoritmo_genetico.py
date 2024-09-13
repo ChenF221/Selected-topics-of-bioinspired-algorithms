@@ -1,4 +1,5 @@
 import numpy as np
+import statistics
 
 # Definir la función Langermann
 def langermann(x, m=5, a=None, b=None, c=None):
@@ -62,25 +63,23 @@ def crossover_SBX(parents, lb, ub, Np, Nvar, Pc, Nc):
 
 
 
-def seleccion_torneo(poblacion, aptitud, Np):
+def seleccion_torneo(poblacion, aptitud, Np, Nvar):
 
-    Nvar = poblacion.shape[1]  # Número de variables (o dimensiones del individuo)
-    
-    # Inicializa la matriz de padres
-    Padres = np.zeros((Np, Nvar))
-    
-    # Crea la matriz de torneos
-    torneo = np.array([np.random.permutation(Np) for _ in range(Np)])
-    
-    # Determina el ganador de cada torneo
+    padres = np.zeros((Np, Nvar))
+
+    # Crear la matriz de torneos con dos columnas por cada selección
+    torneo = np.column_stack((np.random.permutation(Np), np.random.permutation(Np)))
+
+    # Para cada competidor, determinar el ganador del torneo
     for i in range(Np):
-        idx1, idx2 = torneo[i]
-        if aptitud(poblacion[idx1]) < aptitud(poblacion[idx2]):
-            Padres[i] = poblacion[idx1]
+        if aptitud[torneo[i, 0]] < aptitud[torneo[i, 1]]:
+            # Pasa el competidor de la izquierda
+            padres[i, :] = poblacion[torneo[i, 0], :]
         else:
-            Padres[i] = poblacion[idx2]
-    
-    return Padres
+            # Pasa el competidor de la derecha
+            padres[i, :] = poblacion[torneo[i, 1], :]
+
+    return padres
 
 
 def mutation_polynomial(Hijos, lb, ub, Pm, Nm):
@@ -110,46 +109,56 @@ def calculate_fitness(population, langermann_func, *langermann_params):
     return np.array([langermann_func(individual, *langermann_params) for individual in population])
 
 
-def elistismo(poblacion, hijos, best_idx):
+def elistismo(hijos, best_idx):
     random_idx = np.random.randint(0, len(hijos))
-    hijos[random_idx] = poblacion[best_idx]
+    hijos[random_idx] = best_idx
     return hijos
 
 
 def main():
 
     Np = 200                # numero de poplacion
-    num_generation = 200   # Número de generaciones
-    n_var = 2              # Número de variables de decisión
-    pc = 0.9               # Probabilidad de cruzamiento (Crossover)
-    Nc = 2                  # Parámetro del SBX
-    Nm = 20               # numero de mutacion (indice de distribucion)
+    num_generation = 200    # Número de generaciones
+    n_var = 2               # Número de variables de decisión
+    pc = 0.85               # Probabilidad de cruzamiento (Crossover)
     Pm = 0.03               # probabilidad de mutacion
+    Nc = 2                  # Parámetro del SBX
+    Nm = 100                 # numero de mutacion (indice de distribucion)
     lb = np.array([0, 0])  
     ub = np.array([10, 10])
 
-    population = create_initial_population(Np, n_var) # 1
-    fitness = calculate_fitness(population, langermann) # 2
+    population = create_initial_population(Np, n_var) # 1. Generación de población inicial
+    fitness = calculate_fitness(population, langermann) # 2. Evaluación de población en la FO (cálculo de aptitud)
 
     for generation in range(num_generation):
-        
-        best_idx = np.argmin(fitness) # 3
+        # 3 Selección del miembro de la población de mejor aptitud
+        best_idx = np.argmin(fitness) 
+        best_individual = population[best_idx]
 
-        parents = seleccion_torneo(population, fitness, Np) # 4
-
-        hijos = crossover_SBX(parents, lb, ub, Np, n_var, pc, Nc) # 5
-        
-        hijos = mutation_polynomial(hijos, lb, ub, Pm, Nm) # 6
-        
-        new_fitness = calculate_fitness(hijos, langermann) # 7
-        
-        population = elistismo(population, hijos, best_idx) # 8. Extintiva con elitismo
-        
-        # mejor resultado de la generacion
-        best_idx = np.argmin(new_fitness)
-        best_solution = hijos[best_idx]
-        print(f"Generación {generation}: Mejor solución = {best_solution}, Valor de la FO = {langermann(best_solution)}")
+        parents = seleccion_torneo(population, fitness, Np, n_var) # 4. Selección de padres (Torneo determinista de dos individuos)
+        hijos = crossover_SBX(parents, lb, ub, Np, n_var, pc, Nc) # 5. SBX
+        hijos = mutation_polynomial(hijos, lb, ub, Pm, Nm) # 6. Mutación (Polinomial)
     
+        population = elistismo(hijos, best_individual) # 7. Sustitución (Extintiva con elitismo)
+    
+        fitness = calculate_fitness(population, langermann) # 8. Evaluación de los descendientes en la FO (cálculo de aptitud)
+    
+        # Mejor resultado de la generación
+        best_idx = np.argmin(fitness)
+        best_solution = population[best_idx]
+
+        # promedio de la generacion
+        avr_solucion = sum(fitness) / len(fitness)
+
+        # el peor de la generacion
+        worst_idx = np.argmax(fitness)
+        worst_solution = population[worst_idx]
+
+        # desviacion estandar
+        desv_est = statistics.stdev(fitness)
+
+        print(f"Generación {generation}: Mejor solución = {best_solution} -> Valor = {langermann(best_solution):.9f}. Peor solucion = {worst_solution} -> Valor = {langermann(worst_solution):.9f}. Solucion media = {avr_solucion:.9f}. Desv. estandar = {desv_est:.9f}")
+
     # mejor solucion
     best_idx = np.argmin(calculate_fitness(population, langermann))
     best_solution = population[best_idx]
