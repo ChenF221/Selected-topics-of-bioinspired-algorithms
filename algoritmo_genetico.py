@@ -117,13 +117,13 @@ def elistismo(hijos, best_idx):
 
 def main():
 
-    Np = 200                # numero de poplacion
+    Np = 200                # numero de poblacion
     num_generation = 200    # Número de generaciones
     n_var = 2               # Número de variables de decisión
     pc = 0.85               # Probabilidad de cruzamiento (Crossover)
     Pm = 0.03               # probabilidad de mutacion
     Nc = 2                  # Parámetro del SBX
-    Nm = 100                 # numero de mutacion (indice de distribucion)
+    Nm = 100                # numero de mutacion (indice de distribucion)
     lb = np.array([0, 0])  
     ub = np.array([10, 10])
 
