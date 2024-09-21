@@ -1,5 +1,4 @@
 import numpy as np
-import statistics
 
 # Definir la función Langermann
 def langermann(x, m=5, a=None, b=None, c=None):
@@ -42,28 +41,22 @@ def calculate_fitness(population, langermann_func, *langermann_params):
 # Cruzamiento Aritmético Simple para diploides
 def crossover_aritmetico_diploide(parents, lb, ub, Np, Nvar, Pc):
     Hijos = np.zeros((Np, Nvar, 2))
-    for i in range(0, Np-1, 2):
+    for i in range(0, Np - 1, 2):
         if np.random.rand() <= Pc:
-            hijo1 = np.zeros((Nvar, 2))
-            hijo2 = np.zeros((Nvar, 2))
             for j in range(Nvar):
                 p1 = parents[i, j, 0]
-                p2 = parents[i+1, j, 0]
+                p2 = parents[i + 1, j, 0]
                 p1_b = parents[i, j, 1]
-                p2_b = parents[i+1, j, 1]
+                p2_b = parents[i + 1, j, 1]
 
-                # Promedio aritmético para el primer alelo
-                hijo1[j, 0] = 0.5 * (p1 + p2)
-                hijo2[j, 0] = 0.5 * (p1 + p2)
-
-                # Promedio aritmético para el segundo alelo
-                hijo1[j, 1] = 0.5 * (p1_b + p2_b)
-                hijo2[j, 1] = 0.5 * (p1_b + p2_b)
+                # Promedio aritmético
+                Hijos[i, j, 0] = 0.5 * (p1 + p2)
+                Hijos[i + 1, j, 0] = Hijos[i, j, 0]
+                Hijos[i, j, 1] = 0.5 * (p1_b + p2_b)
+                Hijos[i + 1, j, 1] = Hijos[i, j, 1]
         else:
-            hijo1 = parents[i, :, :]
-            hijo2 = parents[i+1, :, :]
-        Hijos[i, :, :] = hijo1
-        Hijos[i+1, :, :] = hijo2
+            Hijos[i, :, :] = parents[i, :, :]
+            Hijos[i + 1, :, :] = parents[i + 1, :, :]
     return Hijos
 
 # Mutación diploide
@@ -76,16 +69,16 @@ def mutation_polynomial_diploide(Hijos, lb, ub, Pm, Nm):
                     r = np.random.rand()
                     delta = min((ub[j] - Hijos[i, j, k]), (Hijos[i, j, k] - lb[j])) / (ub[j] - lb[j])
                     if r <= 0.5:
-                        deltaq = -1 + (2*r + (1 - 2*r) * (1 - delta) ** (Nm + 1)) ** (1 / (Nm + 1))
+                        deltaq = -1 + (2 * r + (1 - 2 * r) * (1 - delta) ** (Nm + 1)) ** (1 / (Nm + 1))
                     else:
-                        deltaq = 1 - (2*(1-r) + 2*(r - 0.5)*(1 - delta) ** (Nm + 1)) ** (1 / (Nm + 1))
+                        deltaq = 1 - (2 * (1 - r) + 2 * (r - 0.5) * (1 - delta) ** (Nm + 1)) ** (1 / (Nm + 1))
                     Hijos[i, j, k] = Hijos[i, j, k] + deltaq * (ub[j] - lb[j])
                     Hijos[i, j, k] = np.clip(Hijos[i, j, k], lb[j], ub[j])
     return Hijos
 
 # Selección por torneo para diploides
-def seleccion_torneo_diploide(poblacion, aptitud, Np, Nvar):
-    padres = np.zeros((Np, Nvar, 2))
+def seleccion_torneo_diploide(poblacion, aptitud, Np):
+    padres = np.zeros((Np, poblacion.shape[1], 2))
     torneo = np.column_stack((np.random.permutation(Np), np.random.permutation(Np)))
     for i in range(Np):
         if aptitud[torneo[i, 0]] < aptitud[torneo[i, 1]]:
@@ -96,42 +89,33 @@ def seleccion_torneo_diploide(poblacion, aptitud, Np, Nvar):
 
 # Sustitución extintiva con elitismo
 def sustitucion_extintiva_con_elitismo(hijos, best_individual):
-    # Crea una nueva población a partir de los hijos
     nueva_poblacion = hijos.copy()
-    
-    # Encuentra el índice aleatorio
     worst_idx = np.random.randint(0, len(hijos))
-    
-    # Reemplaza el peor hijo con el mejor individuo
     nueva_poblacion[worst_idx, :, :] = best_individual
-    
     return nueva_poblacion
 
-
-# Actualización de la probabilidad de dominancia basada en el aprendizaje
-def update_dominance_probs(dominancia_probs, population_diploide, best_individual, learning_rate=0.1):
+# Actualización de la probabilidad de dominancia
+def update_dominance_probs(dominancia_probs, population_diploide, best_individual, alpha=0.1):
     Np, Nvar, _ = population_diploide.shape
     for i in range(Np):
         for j in range(Nvar):
-            # Obtiene los alelos del individuo
-            allele1 = population_diploide[i, j, 0]  # Primer alelo (C1)
-            allele2 = population_diploide[i, j, 1]  # Segundo alelo (C2)
-            
-            # Determina qué alelo es el dominante en el mejor individuo
-            best_allele = best_individual[j]
-            
-            # Si el mejor alelo es el primero (C1)
-            if allele1 == best_allele:
-                dominancia_probs[i, j] = dominancia_probs[i, j] * (1 - learning_rate) + learning_rate * 1  # Favorece C1
+            r = np.random.rand()
+            if r < dominancia_probs[i, j]:
+                dominancia_probs[i, j] = 1
             else:
-                dominancia_probs[i, j] = dominancia_probs[i, j] * (1 - learning_rate)  # Favorece C2
+                dominancia_probs[i, j] = 0
+
+            # Actualización de la probabilidad de dominancia
+            best_allele = best_individual[j]
+            if population_diploide[i, j, 0] == best_allele:
+                dominancia_probs[i, j] = dominancia_probs[i, j] * (1 - alpha) + alpha * 1
+            else:
+                dominancia_probs[i, j] = dominancia_probs[i, j] * (1 - alpha)
 
             # Asegura que las probabilidades estén entre 0 y 1
             dominancia_probs[i, j] = np.clip(dominancia_probs[i, j], 0, 1)
-    
+
     return dominancia_probs
-
-
 
 def main():
     # INPUTS
@@ -143,17 +127,17 @@ def main():
     Nm = 20                 # índice de distribución para la mutación
     lb = np.array([0, 0])  
     ub = np.array([10, 10])
-    alpha = 0.1   # tasa de aprendizaje 
+    alpha = 0.1             # tasa de aprendizaje 
 
     # 1. Generación de población inicial (diploide)
     population_diploide = create_initial_population(Np, n_var)
-    dominancia_probs = np.full((200, 2), 0.5)  # Probabilidades iniciales de dominancia
+    dominancia_probs = np.full((Np, n_var), 0.5)  # Probabilidades iniciales de dominancia
     fitness = np.zeros(Np)
 
     # 2. Selección de fenotipos por dominancia y evaluación
     phenotypes = select_dominant(population_diploide, dominancia_probs)
 
-    # 3. Evaluacion FO
+    # 3. Evaluación FO
     fitness = calculate_fitness(phenotypes, langermann)
 
     # Inicializa la mejor solución
@@ -172,10 +156,10 @@ def main():
             best_solution = current_best_solution
 
         # 5. Actualización de la probabilidad de dominancia usando el mejor individuo
-        dominancia_probs = update_dominance_probs(dominancia_probs, population_diploide, current_best_solution)
+        dominancia_probs = update_dominance_probs(dominancia_probs, population_diploide, current_best_solution, alpha)
 
         # 6. Selección de padres (Torneo)
-        parents = seleccion_torneo_diploide(population_diploide, fitness, Np, n_var)
+        parents = seleccion_torneo_diploide(population_diploide, fitness, Np)
 
         # 7. Cruzamiento y mutación
         hijos = crossover_aritmetico_diploide(parents, lb, ub, Np, n_var, pc)
@@ -193,8 +177,8 @@ def main():
         print(f"Generación {generation}: Mejor solución = {current_best_solution} -> Valor = {current_best_fitness:.9f}")
 
     # Mejor solución encontrada
-    print(f"Mejor solución encontrada: {current_best_solution}")
-    print(f"Valor de la función Langermann: {current_best_fitness:.9f}")
+    print(f"Mejor solución encontrada: {best_solution}")
+    print(f"Valor de la función Langermann: {best_fitness:.9f}")
 
 if __name__ == "__main__":
     main()
