@@ -89,33 +89,35 @@ def seleccion_torneo_diploide(poblacion, aptitud, Np):
 
 # Sustitución extintiva con elitismo
 def sustitucion_extintiva_con_elitismo(hijos, best_individual):
-    nueva_poblacion = hijos.copy()
-    worst_idx = np.random.randint(0, len(hijos))
-    nueva_poblacion[worst_idx, :, :] = best_individual
-    return nueva_poblacion
+    # Encuentra el peor individuo en términos de aptitud
+    worst_idx = np.argmax(calculate_fitness(select_dominant(hijos, np.full((hijos.shape[0], hijos.shape[1]), 0.5)), langermann))
+    hijos[worst_idx, :, :] = best_individual
+    return hijos
+
 
 # Actualización de la probabilidad de dominancia
 def update_dominance_probs(dominancia_probs, population_diploide, best_individual, alpha=0.1):
     Np, Nvar, _ = population_diploide.shape
     for i in range(Np):
         for j in range(Nvar):
-            r = np.random.rand()
-            if r < dominancia_probs[i, j]:
-                dominancia_probs[i, j] = 1
-            else:
-                dominancia_probs[i, j] = 0
-
-            # Actualización de la probabilidad de dominancia
-            best_allele = best_individual[j]
+            # Compara cada alelo del individuo con el mejor alelo
+            best_allele = best_individual[0, j]  # El alelo dominante del mejor individuo
+            
+            # Comparación con el primer alelo
             if population_diploide[i, j, 0] == best_allele:
-                dominancia_probs[i, j] = dominancia_probs[i, j] * (1 - alpha) + alpha * 1
+                dominancia_probs[i, j] = dominancia_probs[i, j] * (1 - alpha) + alpha
+            # Comparación con el segundo alelo
+            elif population_diploide[i, j, 1] == best_allele:
+                dominancia_probs[i, j] = dominancia_probs[i, j] * (1 - alpha)
             else:
+                # En caso de que ninguno coincida, no cambia la probabilidad
                 dominancia_probs[i, j] = dominancia_probs[i, j] * (1 - alpha)
 
             # Asegura que las probabilidades estén entre 0 y 1
             dominancia_probs[i, j] = np.clip(dominancia_probs[i, j], 0, 1)
 
     return dominancia_probs
+
 
 def main():
     # INPUTS
@@ -140,45 +142,45 @@ def main():
     # 3. Evaluación FO
     fitness = calculate_fitness(phenotypes, langermann)
 
-    # Inicializa la mejor solución
-    best_idx = np.argmin(fitness)
-    best_solution = phenotypes[best_idx]
-    best_fitness = fitness[best_idx]
+    # Inicializa la mejor aptitud y el mejor individuo
+    best_fitness = np.min(fitness)
+    best_individual = population_diploide[np.argmin(fitness), :, :]
 
-    for generation in range(num_generation):
-        # 4. Selección del mejor miembro de la población
-        best_idx = np.argmin(fitness)
-        current_best_solution = phenotypes[best_idx]
-        current_best_fitness = fitness[best_idx]
-
-        if current_best_fitness < best_fitness:
-            best_fitness = current_best_fitness
-            best_solution = current_best_solution
-
-        # 5. Actualización de la probabilidad de dominancia usando el mejor individuo
-        dominancia_probs = update_dominance_probs(dominancia_probs, population_diploide, current_best_solution, alpha)
-
-        # 6. Selección de padres (Torneo)
+    # Bucle evolutivo
+    for gen in range(num_generation):
+        print(f"Generación {gen + 1} | Mejor aptitud: {best_fitness}")
+        
+        # 4. Selección de padres por torneo
         parents = seleccion_torneo_diploide(population_diploide, fitness, Np)
 
-        # 7. Cruzamiento y mutación
-        hijos = crossover_aritmetico_diploide(parents, lb, ub, Np, n_var, pc)
-        hijos = mutation_polynomial_diploide(hijos, lb, ub, Pm, Nm)
+        # 5. Cruzamiento
+        offspring = crossover_aritmetico_diploide(parents, lb, ub, Np, n_var, pc)
 
-        # 8. Selección de fenotipos por dominancia
-        phenotypes = select_dominant(hijos, dominancia_probs)
+        # 6. Mutación
+        offspring = mutation_polynomial_diploide(offspring, lb, ub, Pm, Nm)
 
-        # 9. Evaluación de los descendientes
-        fitness = calculate_fitness(phenotypes, langermann)
+        # 7. Evaluación de descendientes
+        offspring_phenotypes = select_dominant(offspring, dominancia_probs)
+        offspring_fitness = calculate_fitness(offspring_phenotypes, langermann)
 
-        # 10. Sustitución (extintiva con elitismo)
-        population_diploide = sustitucion_extintiva_con_elitismo(hijos, current_best_solution)
+        # 8. Sustitución con elitismo
+        offspring = sustitucion_extintiva_con_elitismo(offspring, best_individual)
 
-        print(f"Generación {generation}: Mejor solución = {current_best_solution} -> Valor = {current_best_fitness:.9f}")
+        # 9. Actualización de probabilidades de dominancia
+        dominancia_probs = update_dominance_probs(dominancia_probs, population_diploide, best_individual, alpha)
 
-    # Mejor solución encontrada
-    print(f"Mejor solución encontrada: {best_solution}")
-    print(f"Valor de la función Langermann: {best_fitness:.9f}")
+        # 10. Actualización de la población y aptitud
+        population_diploide = offspring
+        fitness = offspring_fitness
+
+        # Actualizar la mejor solución
+        current_best_fitness = np.min(fitness)
+        if current_best_fitness < best_fitness:
+            best_fitness = current_best_fitness
+            best_individual = offspring[np.argmin(fitness), :, :]
+
+    print(f"\nMejor solución: {select_dominant(np.array([best_individual]), dominancia_probs)[0]}")
+    print(f"Mejor aptitud: {best_fitness}")
 
 if __name__ == "__main__":
     main()
