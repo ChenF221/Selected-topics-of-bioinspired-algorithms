@@ -124,8 +124,8 @@ def main():
     Np = 200                # número de población
     num_generation = 200    # Número de generaciones
     n_var = 2               # Número de variables de decisión
-    pc = 0.85               # Probabilidad de cruzamiento (Crossover)
-    Pm = 0.05               # probabilidad de mutación
+    pc = 0.5                # Probabilidad de cruzamiento (Crossover)
+    Pm = 0.3                # probabilidad de mutación
     Nm = 20                 # índice de distribución para la mutación
     lb = np.array([0, 0])  
     ub = np.array([10, 10])
