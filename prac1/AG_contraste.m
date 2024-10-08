@@ -12,8 +12,8 @@ function AG_contraste()
     proba_mutacion = 0.2;      % Probabilidad de mutación
     %Nc = 2;                % Parámetro SBX
     %Nm = 20;               % Parámetro de mutación polinomial
-    lb = [0, 0];              % Límites inferiores de las variables
-    ub = [10, 10];            % Límites superiores de las variables
+    lb = [0, 0];              % Límites inferiores el primero es alpha y el segundo es delta
+    ub = [10, 1];           % Límites superiores el primero es alpha y el segundo es delta
     % Generar la población inicial
     poblacion = zeros(tam_poblacion, 2);
     for i= 1:tam_poblacion
