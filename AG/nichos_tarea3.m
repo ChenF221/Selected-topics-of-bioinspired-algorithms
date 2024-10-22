@@ -7,21 +7,21 @@ function AG()
     % Pm: probabilidad de mutación
     % num_variables: número de variables en el problema
 
-    num_generaciones = 5000;   % Número de generaciones
+    num_generaciones = 200;   % Número de generaciones
     tam_poblacion = 100;      % Tamaño de la población
     proba_cruce = 0.9;         % Probabilidad de cruce
     proba_mutacion = 0;      % Probabilidad de mutación
     Nc = 2;                % Parámetro SBX
     Nm = 20;               % Parámetro de mutación polinomial
-    lb = [0, 0];              % Límites inferiores de las variables
-    ub = [10, 10];            % Límites superiores de las variables
+    lb = [-5, -5];              % Límites inferiores de las variables
+    ub = [5, 5];            % Límites superiores de las variables
     alpha = 0.5;                % factor de escala
     %q = 10;                         % cantidad de picos en la funcion
 
 
     % Calcular el radio de nicho
-    %radioNicho = 0;
-    radioNicho = 0.1;
+    radioNicho = 0;
+    %radioNicho = 0.1;
     
     % Generar la población inicial
     poblacion = zeros(tam_poblacion, 2);
