@@ -78,11 +78,10 @@ function aptitud = evaluar_poblacion(poblacion, lambda)
     for i = 1:tam_poblacion
         x = poblacion(i, :);
         
-        f = x(1)*R(1) + x(2)*R(2) + x(3)*R(3) + x(4)*R(4) + x(5)*R(5) + x(6)*R(6);
+        f = sum(x .* riesgo);
 
         g1 = sum(x) - 1;
-        riesgo_total = sum(x .* riesgo);
-        g2 = riesgo_total - 0.35;  
+        g2 = sum(x .* riesgo) - 0.35;  
 
         Rd = [g1 g2];
         Ri = [0];
