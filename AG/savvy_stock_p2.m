@@ -81,14 +81,14 @@ function aptitud = evaluar_poblacion(poblacion, lambda)
         f = sum(x .* riesgo);
 
         g1 = sum(x) - 1;
-        g2 = sum(x .* riesgo) - 0.35;  
+        g2 = sum(x .* R) - 35;  
 
         Rd = [g1 g2];
         Ri = [0];
         
         P = sum(max(Rd, 0).^2, 2) + sum((Ri).^2, 2);
         
-        aptitud(i) = -f + lambda * P; 
+        aptitud(i) = -f + lambda * P;
     end
 end
 
