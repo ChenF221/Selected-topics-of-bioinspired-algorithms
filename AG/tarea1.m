@@ -14,10 +14,12 @@ function AG()
     %Nm = 20;               % Parámetro de mutación polinomial
     lb = [0, 0];              % Límites inferiores de las variables
     ub = [10, 10];            % Límites superiores de las variables
+    Nvar = 2;
+
     % Generar la población inicial
     poblacion = zeros(tam_poblacion, 2);
     for i= 1:tam_poblacion
-        for j= 1:2
+        for j= 1:Nvar
             poblacion(i,j)= (lb(j)+rand*(ub(j) - lb(j)));
         end
     end
@@ -35,10 +37,10 @@ function AG()
         mejor_individuo = poblacion(idx_mejor, :);
         
         % 4. Selección de padres por torneo determinista
-        padres = torneo_seleccion(poblacion, aptitud);
+        padres = torneo_seleccion(poblacion, aptitud, Nvar);
         
         % 5. Cruzamiento SBX (Single-Point Crossover)
-        hijos = sbx_crossover(padres, proba_cruce, lb, ub, Nc,tam_poblacion);
+        hijos = sbx_crossover(padres, proba_cruce, lb, ub, Nc,tam_poblacion, Nvar);
         
         % 6. Mutación polinomial
         hijos = mutacion_polinomial(hijos, proba_mutacion, lb, ub,Nm);
@@ -90,9 +92,9 @@ function valor = langerman(x)
 end
 
 % Selección por torneo
-function padres = torneo_seleccion(poblacion, aptitud)
+function padres = torneo_seleccion(poblacion, aptitud, Nvar)
     tam_poblacion = size(poblacion, 1);
-    padres = zeros(tam_poblacion, size(poblacion, 2));
+    padres = zeros(tam_poblacion, size(poblacion, Nvar));
     for i = 1:2:tam_poblacion
         idx1 = randi(tam_poblacion);
         idx2 = randi(tam_poblacion);
@@ -112,9 +114,8 @@ function padres = torneo_seleccion(poblacion, aptitud)
 end
 
 % Operador de cruzamiento SBX
-function hijos = sbx_crossover(padres, proba_cruce, lb, ub,Nc,tam_poblacion)
-    Np=tam_poblacion;
-    Nvar=2; 
+function hijos = sbx_crossover(padres, proba_cruce, lb, ub,Nc,tam_poblacion, Nvar)
+    Np=tam_poblacion; 
     hijos = zeros(Np, Nvar);
     hijo1 = zeros(1, Nvar);
     hijo2 = zeros(1, Nvar);
@@ -132,7 +133,7 @@ function hijos = sbx_crossover(padres, proba_cruce, lb, ub,Nc,tam_poblacion)
                     beta_c = (1 / (2 - U * alpha))^(1/(Nc + 1));
                 end
                 hijos(i, j) = 0.5 * ((P1 + P2) - beta_c * abs(P2 - P1));
-                hijos(i, j) = 0.5 * ((P1 + P2) + beta_c * abs(P2 - P1));
+                hijos(i+1, j) = 0.5 * ((P1 + P2) + beta_c * abs(P2 - P1));
             end
         else
             hijo1= padres(i,:);

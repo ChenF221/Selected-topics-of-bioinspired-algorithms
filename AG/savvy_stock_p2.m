@@ -6,8 +6,8 @@ function AG()
     % Pm: probabilidad de mutación
     % num_variables: número de variables en el problema
 
-    num_generaciones = 500;   % Número de generaciones
-    tam_poblacion = 500;      % Tamaño de la población
+    num_generaciones = 1000;   % Número de generaciones
+    tam_poblacion = 1000;      % Tamaño de la población
     proba_cruce = 0.7;         % Probabilidad de cruce
     proba_mutacion = 0.2;      % Probabilidad de mutación
     %Nc = 2;                % Parámetro SBX
@@ -73,18 +73,24 @@ function aptitud = evaluar_poblacion(poblacion, lambda)
     tam_poblacion = size(poblacion, 1);
     aptitud = zeros(tam_poblacion, 1);
     R = [0.2, 0.42, 1, 0.5, 0.46, 0.3];
-    riesgo = [0.032, 0.1, 0.333, 0.125, 0.065, 0.08];
+    %riesgo = [0.032, 0.1, 0.333, 0.125, 0.065, 0.08];
+    Cov_matrix = [0.032 0.005 0.03 -0.031 -0.027 0.01;
+                  0.005 0.1 0.085 -0.07 -0.05 0.02;
+                  0.03 0.085 0.333 -0.11 -0.02 0.042;
+                 -0.031 -0.07 -0.11 0.125 0.05 -0.06;
+                 -0.027 -0.05 -0.02 0.05 0.065 -0.02;
+                  0.01 0.02 0.042 -0.06 -0.02 0.08];
     
     for i = 1:tam_poblacion
         x = poblacion(i, :);
         
-        f = sum(x .* riesgo);
+        f = x * Cov_matrix * x';
 
         g1 = sum(x) - 1;
-        g2 = sum(x .* R) - 35;  
+        g2 = sum(x .* R) - 0.35;  
 
         Rd = [g1 g2];
-        Ri = [0];
+        Ri = [0 0];
         
         P = sum(max(Rd, 0).^2, 2) + sum((Ri).^2, 2);
         
@@ -150,7 +156,7 @@ function hijos = sbx_crossover(padres, proba_cruce, lb, ub,Nc,tam_poblacion, Nva
                     beta_c = (1 / (2 - U * alpha))^(1/(Nc + 1));
                 end
                 hijos(i, j) = 0.5 * ((P1 + P2) - beta_c * abs(P2 - P1));
-                hijos(i, j) = 0.5 * ((P1 + P2) + beta_c * abs(P2 - P1));
+                hijos(i+1, j) = 0.5 * ((P1 + P2) + beta_c * abs(P2 - P1));
             end
         else
             hijo1= padres(i,:);
