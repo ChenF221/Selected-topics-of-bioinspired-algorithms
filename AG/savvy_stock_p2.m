@@ -6,15 +6,15 @@ function AG()
     % Pm: probabilidad de mutación
     % num_variables: número de variables en el problema
 
-    num_generaciones = 1000;   % Número de generaciones
-    tam_poblacion = 1000;      % Tamaño de la población
-    proba_cruce = 0.7;         % Probabilidad de cruce
-    proba_mutacion = 0.2;      % Probabilidad de mutación
+    num_generaciones = 10000;   % Número de generaciones
+    tam_poblacion = 50;      % Tamaño de la población
+    proba_cruce = 0.9;         % Probabilidad de cruce
+    proba_mutacion = 0.05;      % Probabilidad de mutación
     %Nc = 2;                % Parámetro SBX
     %Nm = 20;               % Parámetro de mutación polinomial
     lb = [0, 0, 0, 0, 0, 0];              % Límites inferiores de las variables
     ub = [0.4, 0.4, 0.4, 0.4, 0.4, 0.4];          % Límites superiores de las variables
-    lambda = 1000;              % parametro de penalizacion exterior
+    lambda = 10000;              % parametro de penalizacion exterior
     Nvar = 6;                   % numero de variable
 
 
@@ -60,7 +60,7 @@ function AG()
         %fprintf('Generación %d: Mejor aptitud = %.4f\n', gen, min(aptitud) );
         %fprintf('Generación %d: Mejor aptitud = %.6f, Mejor individuo = [%f, %f]\n', gen, min(aptitud), mejor_individuo(1), mejor_individuo(2));
         fprintf('Generación %d: Mejor aptitud = %.6f, Mejor individuo = [%f, %f, %f, %f, %f, %f],Nm=%d,Nc=%d\n', ...
-                              gen, -min(aptitud), mejor_individuo(1), mejor_individuo(2), mejor_individuo(3), mejor_individuo(4), mejor_individuo(5), mejor_individuo(6),Nm,Nc);
+                              gen, min(aptitud), mejor_individuo(1), mejor_individuo(2), mejor_individuo(3), mejor_individuo(4), mejor_individuo(5), mejor_individuo(6),Nm,Nc);
 
     end
      % Imprimir la ultima población 
@@ -73,7 +73,6 @@ function aptitud = evaluar_poblacion(poblacion, lambda)
     tam_poblacion = size(poblacion, 1);
     aptitud = zeros(tam_poblacion, 1);
     R = [0.2, 0.42, 1, 0.5, 0.46, 0.3];
-    %riesgo = [0.032, 0.1, 0.333, 0.125, 0.065, 0.08];
     Cov_matrix = [0.032 0.005 0.03 -0.031 -0.027 0.01;
                   0.005 0.1 0.085 -0.07 -0.05 0.02;
                   0.03 0.085 0.333 -0.11 -0.02 0.042;
@@ -81,20 +80,28 @@ function aptitud = evaluar_poblacion(poblacion, lambda)
                  -0.027 -0.05 -0.02 0.05 0.065 -0.02;
                   0.01 0.02 0.042 -0.06 -0.02 0.08];
     
-    for i = 1:tam_poblacion
-        x = poblacion(i, :);
+    for a = 1:tam_poblacion
+        x = poblacion(a, :);
         
+        % f = 0;
+        % n = length(x);
+        % for i = 1:n
+        %     for j = 1:n
+        %         f = f + x(i) * x(j) * Cov_matrix(i, j);
+        %     end
+        % end
+
         f = x * Cov_matrix * x';
 
         g1 = sum(x) - 1;
-        g2 = sum(x .* R) - 0.35;  
+        g2 = 0.35 - sum(x .* R);  
 
         Rd = [g1 g2];
         Ri = [0 0];
         
         P = sum(max(Rd, 0).^2, 2) + sum((Ri).^2, 2);
         
-        aptitud(i) = -f + lambda * P;
+        aptitud(a) = f + lambda * P;
     end
 end
 
