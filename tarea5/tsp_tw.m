@@ -1,9 +1,9 @@
 function tsp_tw()
     % Parámetros del Algoritmo Genético
-    numGeneraciones = 100;
+    numGeneraciones = 1000;
     tamPoblacion = 50;
-    probMutacion = 0.2;
-    probCrossover = 0.8;
+    probMutacion = 0.05;
+    probCrossover = 0.85;
     
     % Datos del problema: Costos entre ciudades y ventanas de tiempo
     distancias = [
