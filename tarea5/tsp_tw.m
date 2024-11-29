@@ -4,8 +4,8 @@ function tsp_tw_1()
     numGeneraciones = 1000;
     tamPoblacion = 50;
     probMutacion = 0.05;
-    probCrossover = 0.85;
-    lambda = 50; % Factor de penalización (ajustable)
+    probCrossover = 0.9;
+    lambda = 50; % Factor de penalización
     
     % Datos del problema: Costos entre ciudades y ventanas de tiempo
     distancias = [
@@ -23,34 +23,36 @@ function tsp_tw_1()
     ];
     
     % Ventanas de tiempo para cada ciudad (en horas)
-    ventanasTiempo = [
-        -inf, inf;   % New York
-        50, 90;      % Los Angeles
-        15, 25;      % Chicago
-        30, 55;      % Houston
-        15, 75;      % Phoenix
-        5, 35;       % Philadelphia
-        150, 200;    % San Diego
-        25, 50;      % Dallas
-        65, 100;     % San Francisco
-        120, 150;    % Austin
-        30, 85       % Las Vegas
-    ];
-    
     % ventanasTiempo = [
-    % -inf, inf;   % New York
-    % -inf, inf;   % Los Angeles
-    % -inf, inf;   % Chicago
-    % -inf, inf;   % Houston
-    % -inf, inf;   % Phoenix
-    % -inf, inf;   % Philadelphia
-    % -inf, inf;   % San Diego
-    % -inf, inf;   % Dallas
-    % -inf, inf;   % San Francisco
-    % -inf, inf;   % Austin
-    % -inf, inf    % Las Vegas
+    %     -inf, inf;   % New York
+    %     50, 90;      % Los Angeles
+    %     15, 25;      % Chicago
+    %     30, 55;      % Houston
+    %     15, 75;      % Phoenix
+    %     5, 35;       % Philadelphia
+    %     150, 200;    % San Diego
+    %     25, 50;      % Dallas
+    %     65, 100;     % San Francisco
+    %     120, 150;    % Austin
+    %     30, 85       % Las Vegas
     % ];
-    % Generar población inicial
+    
+    ventanasTiempo = [
+    -inf, inf;   % New York
+    -inf, inf;   % Los Angeles
+    -inf, inf;   % Chicago
+    -inf, inf;   % Houston
+    -inf, inf;   % Phoenix
+    -inf, inf;   % Philadelphia
+    -inf, inf;   % San Diego
+    -inf, inf;   % Dallas
+    -inf, inf;   % San Francisco
+    -inf, inf;   % Austin
+    -inf, inf    % Las Vegas
+    ];
+
+
+    %Generar población inicial
     poblacion = inicializarPoblacion(tamPoblacion, size(distancias, 1));
     
     % Evolución del Algoritmo Genético
@@ -71,15 +73,36 @@ function tsp_tw_1()
         poblacion = nuevaPoblacion;
     end
     
-    % Evaluar la mejor solución encontrada
+    % % Evaluar la mejor solución encontrada
     aptitudFinal = evaluarPoblacion(poblacion, distancias, ventanasTiempo, lambda);
     [~, mejorIndice] = min(aptitudFinal);
     mejorRuta = poblacion(mejorIndice, :);
+
+    % % Mostrar la mejor ruta encontrada
+    % fprintf('Mejor ruta encontrada: ');
+    % disp(mejorRuta);
+    % fprintf('Costo total: %.2f\n', aptitudFinal(mejorIndice));
+
+    % Calcular la media de los valores de aptitud
+    promedioAptitud = mean(aptitudFinal);
     
-    % Mostrar la mejor ruta encontrada
+    % Encontrar el índice de la aptitud más cercana al promedio
+    [~, promIndice] = min(abs(aptitudFinal - promedioAptitud));
+    
+    % Seleccionar la ruta promedio
+    promRuta = poblacion(promIndice, :);
+    
+    % Mostrar los resultados
     fprintf('Mejor ruta encontrada: ');
     disp(mejorRuta);
-    fprintf('Costo total: %.2f\n', aptitudFinal(mejorIndice));
+    fprintf('Costo total de la mejor ruta: %.2f\n', aptitudFinal(mejorIndice));
+    fprintf('\n\n');
+
+
+    fprintf('Ruta promedio encontrada: ');
+    disp(promRuta);
+    fprintf('Costo total de la ruta promedio: %.2f\n', aptitudFinal(promIndice));
+
     grafica(mejorRuta)
 end
 
@@ -293,7 +316,7 @@ function grafica(ciudades_conectadas)
     end
     
     % Ajustes del gráfico
-    title('Grafica del mejor ruta');
+    title('Grafica del mejor ruta sin ventanas de tiempo');
     xlabel('Longitud');
     ylabel('Latitud');
     xlim([-125, -65]);  % Limites de longitud para EE.UU.
