@@ -5,7 +5,7 @@ function tsp_tw_1()
     tamPoblacion = 50;
     probMutacion = 0.05;
     probCrossover = 0.85;
-    lambda = 10; % Factor de penalización (ajustable)
+    lambda = 50; % Factor de penalización (ajustable)
     
     % Datos del problema: Costos entre ciudades y ventanas de tiempo
     distancias = [
@@ -258,7 +258,7 @@ function grafica(ciudades_conectadas)
     ciudades_conectadas = [ciudades_conectadas, ciudades_conectadas(1)];
     
     % Cargar el archivo shapefile de los países
-    shapefile_path = 'D:/Escom/Semestre_6/Bioinpirados/tarea5/110m_cultural/ne_110m_admin_0_countries.shp';  % Reemplaza con la ruta correcta
+    shapefile_path = '110m_cultural/ne_110m_admin_0_countries.shp';  % Reemplaza con la ruta correcta
     S = shaperead(shapefile_path);
     
     % Filtrar solo los datos de Estados Unidos
@@ -293,7 +293,7 @@ function grafica(ciudades_conectadas)
     end
     
     % Ajustes del gráfico
-    title('Ciudades Conectadas en los Estados Unidos');
+    title('Grafica del mejor ruta');
     xlabel('Longitud');
     ylabel('Latitud');
     xlim([-125, -65]);  % Limites de longitud para EE.UU.
