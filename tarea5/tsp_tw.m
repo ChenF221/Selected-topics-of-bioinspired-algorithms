@@ -1,5 +1,5 @@
 
-function tsp_tw()
+function tsp_tw_1()
     % Parámetros del Algoritmo Genético
     numGeneraciones = 1000;
     tamPoblacion = 50;
@@ -302,3 +302,4 @@ function grafica(ciudades_conectadas)
     hold off;
 
 end
+
