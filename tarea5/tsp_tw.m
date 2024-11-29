@@ -1,9 +1,11 @@
+
 function tsp_tw()
     % Parámetros del Algoritmo Genético
     numGeneraciones = 1000;
     tamPoblacion = 50;
     probMutacion = 0.05;
     probCrossover = 0.85;
+    lambda = 10; % Factor de penalización (ajustable)
     
     % Datos del problema: Costos entre ciudades y ventanas de tiempo
     distancias = [
@@ -21,40 +23,40 @@ function tsp_tw()
     ];
     
     % Ventanas de tiempo para cada ciudad (en horas)
-    % ventanasTiempo = [
-    %     -inf, inf;   % New York
-    %     50, 90;      % Los Angeles
-    %     15, 25;      % Chicago
-    %     30, 55;      % Houston
-    %     15, 75;      % Phoenix
-    %     5, 35;       % Philadelphia
-    %     150, 200;    % San Diego
-    %     25, 50;      % Dallas
-    %     65, 100;     % San Francisco
-    %     120, 150;    % Austin
-    %     30, 85       % Las Vegas
-    % ];
-    
     ventanasTiempo = [
-    -inf, inf;   % New York
-    -inf, inf;   % Los Angeles
-    -inf, inf;   % Chicago
-    -inf, inf;   % Houston
-    -inf, inf;   % Phoenix
-    -inf, inf;   % Philadelphia
-    -inf, inf;   % San Diego
-    -inf, inf;   % Dallas
-    -inf, inf;   % San Francisco
-    -inf, inf;   % Austin
-    -inf, inf    % Las Vegas
+        -inf, inf;   % New York
+        50, 90;      % Los Angeles
+        15, 25;      % Chicago
+        30, 55;      % Houston
+        15, 75;      % Phoenix
+        5, 35;       % Philadelphia
+        150, 200;    % San Diego
+        25, 50;      % Dallas
+        65, 100;     % San Francisco
+        120, 150;    % Austin
+        30, 85       % Las Vegas
     ];
+    
+    % ventanasTiempo = [
+    % -inf, inf;   % New York
+    % -inf, inf;   % Los Angeles
+    % -inf, inf;   % Chicago
+    % -inf, inf;   % Houston
+    % -inf, inf;   % Phoenix
+    % -inf, inf;   % Philadelphia
+    % -inf, inf;   % San Diego
+    % -inf, inf;   % Dallas
+    % -inf, inf;   % San Francisco
+    % -inf, inf;   % Austin
+    % -inf, inf    % Las Vegas
+    % ];
     % Generar población inicial
     poblacion = inicializarPoblacion(tamPoblacion, size(distancias, 1));
     
     % Evolución del Algoritmo Genético
     for generacion = 1:numGeneraciones
         % Evaluar la aptitud de la población
-        aptitud = evaluarPoblacion(poblacion, distancias, ventanasTiempo);
+        aptitud = evaluarPoblacion(poblacion, distancias, ventanasTiempo, lambda);
         
         % Selección
         nuevaPoblacion = seleccion(poblacion, aptitud);
@@ -70,7 +72,7 @@ function tsp_tw()
     end
     
     % Evaluar la mejor solución encontrada
-    aptitudFinal = evaluarPoblacion(poblacion, distancias, ventanasTiempo);
+    aptitudFinal = evaluarPoblacion(poblacion, distancias, ventanasTiempo, lambda);
     [~, mejorIndice] = min(aptitudFinal);
     mejorRuta = poblacion(mejorIndice, :);
     
@@ -78,6 +80,7 @@ function tsp_tw()
     fprintf('Mejor ruta encontrada: ');
     disp(mejorRuta);
     fprintf('Costo total: %.2f\n', aptitudFinal(mejorIndice));
+    grafica(mejorRuta)
 end
 
 % Funciones auxiliares
@@ -89,20 +92,47 @@ function poblacion = inicializarPoblacion(tamPoblacion, numCiudades)
     end
 end
 
-function aptitud = evaluarPoblacion(poblacion, distancias, ventanasTiempo)
-    % Calcula la aptitud de cada individuo en la población
+function aptitud = evaluarPoblacion(poblacion, distancias, ventanasTiempo, lambda)
+    % Evaluar la aptitud de cada ruta en la población considerando las ventanas de tiempo
     tamPoblacion = size(poblacion, 1);
     aptitud = zeros(tamPoblacion, 1);
+
+
     for i = 1:tamPoblacion
         ruta = poblacion(i, :);
-        costo = 0;
-        for j = 1:length(ruta)-1
-            costo = costo + distancias(ruta(j), ruta(j+1));
+
+        % Encontrar el índice de la ciudad 1 en la ruta
+        idxInicio = find(ruta == 1, 1);
+        
+        % Reorganizar la ruta para que empiece desde la ciudad 1
+        ruta = [ruta(idxInicio:end), ruta(1:idxInicio-1)];
+        ruta(end + 1) = 1; % Añadir la ciudad 1 al final para el regreso
+
+        % Inicialización de tiempos
+        tiempoLlegada = zeros(1, length(ruta));
+        penalizacion = 0;
+
+        % Evaluar la ruta completa
+        for j = 2:length(ruta)
+            ciudadAnterior = ruta(j - 1);
+            ciudadActual = ruta(j);
+
+            % Calcular el tiempo de viaje y llegada
+            tiempoViaje = distancias(ciudadAnterior, ciudadActual);
+            tiempoLlegada(j) = max(ventanasTiempo(ciudadActual, 1), tiempoLlegada(j - 1) + tiempoViaje);
+
+            % Penalización por exceder la ventana de tiempo superior
+            exceso = max(0, tiempoLlegada(j) - ventanasTiempo(ciudadActual, 2));
+            penalizacion = penalizacion + exceso^2; % Penalización cuadrática
         end
-        costo = costo + distancias(ruta(end), ruta(1)); % Regresar al inicio
-        aptitud(i) = costo;
+
+        % Calcular el tiempo total de la ruta y agregar la penalización
+        tiempoTotal = tiempoLlegada(end);
+        aptitud(i) = tiempoTotal + lambda * penalizacion;
     end
 end
+
+
 
 function nuevaPoblacion = seleccion(poblacion, aptitud)
     % Selección por torneo
@@ -120,22 +150,74 @@ function nuevaPoblacion = seleccion(poblacion, aptitud)
 end
 
 function nuevaPoblacion = crossover(poblacion, probCrossover)
-    % Operador de crossover (cruce de orden)
+    % Operador de crossover cíclico para toda la población
     tamPoblacion = size(poblacion, 1);
     nuevaPoblacion = poblacion;
     for i = 1:2:tamPoblacion-1
         if rand < probCrossover
-            % Seleccionar dos padres y realizar el cruce
+            % Seleccionar dos padres y realizar el cruzamiento cíclico
             padre1 = poblacion(i, :);
             padre2 = poblacion(i+1, :);
-            puntoCorte = randi(length(padre1) - 1);
-            hijo1 = [padre1(1:puntoCorte), padre2(~ismember(padre2, padre1(1:puntoCorte)))];
-            hijo2 = [padre2(1:puntoCorte), padre1(~ismember(padre1, padre2(1:puntoCorte)))];
+            [hijo1, hijo2] = cruzamientoCiclico(padre1, padre2);
             nuevaPoblacion(i, :) = hijo1;
             nuevaPoblacion(i+1, :) = hijo2;
         end
     end
 end
+
+function [descendiente1, descendiente2] = cruzamientoCiclico(padre1, padre2)
+    % Esta función implementa el cruzamiento cíclico (Cycle Crossover, CX)
+    % Entrada:
+    % padre1 - vector del primer padre
+    % padre2 - vector del segundo padre
+    % Salida:
+    % descendiente1 - vector del primer descendiente
+    % descendiente2 - vector del segundo descendiente
+
+    % Inicialización de descendientes
+    descendiente1 = zeros(1, length(padre1));
+    descendiente2 = zeros(1, length(padre2));
+
+    % Identificación de ciclos
+    ciclo_inicial = 1; % Comienza desde el primer índice no visitado
+    visitados = false(1, length(padre1)); % Marcador para posiciones visitadas
+
+    while any(~visitados)
+        % Ciclo actual
+        ciclo_indices = [];
+        indice_actual = find(~visitados, 1); % Encuentra el primer índice no visitado
+        inicio = indice_actual; % Guarda el inicio del ciclo
+
+        % Construcción del ciclo
+        while true
+            ciclo_indices(end + 1) = indice_actual;
+            visitados(indice_actual) = true;
+            valor = padre2(indice_actual);
+            indice_actual = find(padre1 == valor);
+
+            if indice_actual == inicio
+                break;
+            end
+        end
+
+        % Asignación a los descendientes según el ciclo
+        if mod(ciclo_inicial, 2) == 1 % Ciclos impares: copia de Padre 1 a Descendiente 1
+            descendiente1(ciclo_indices) = padre1(ciclo_indices);
+            descendiente2(ciclo_indices) = padre2(ciclo_indices);
+        else % Ciclos pares: intercambio de padres
+            descendiente1(ciclo_indices) = padre2(ciclo_indices);
+            descendiente2(ciclo_indices) = padre1(ciclo_indices);
+        end
+
+        % Avanzar al siguiente ciclo
+        ciclo_inicial = ciclo_inicial + 1;
+    end
+
+    % Rellenar las posiciones restantes
+    descendiente1(descendiente1 == 0) = padre2(descendiente1 == 0);
+    descendiente2(descendiente2 == 0) = padre1(descendiente2 == 0);
+end
+
 
 function nuevaPoblacion = mutacion(poblacion, probMutacion)
     % Operador de mutación (intercambio de dos ciudades)
@@ -152,4 +234,71 @@ function nuevaPoblacion = mutacion(poblacion, probMutacion)
             nuevaPoblacion(i, idx2) = temp;
         end
     end
+end
+
+%%%%%%%%%%%%%%%%%%%%%% GRAFICA %%%%%%%%%%%%%%%%%%%
+function grafica(ciudades_conectadas)
+
+    % Coordenadas de las ciudades (lat, lon)
+    ciudades = {
+        'New York', 40.7128, -74.0060;
+        'Los Angeles', 34.0522, -118.2437;
+        'Chicago', 41.8781, -87.6298;
+        'Houston', 29.7604, -95.3698;
+        'Phoenix', 33.4484, -112.0740;
+        'Philadelphia', 39.9526, -75.1652;
+        'San Diego', 32.7157, -117.1611;
+        'Dallas', 32.7767, -96.7970;
+        'San Francisco', 37.7749, -122.4194;
+        'Austin', 30.2672, -97.7431;
+        'Las Vegas', 36.1699, -115.1398
+    };
+    
+    % Arreglo de ciudades que final regrese al inicio
+    ciudades_conectadas = [ciudades_conectadas, ciudades_conectadas(1)];
+    
+    % Cargar el archivo shapefile de los países
+    shapefile_path = 'D:/Escom/Semestre_6/Bioinpirados/tarea5/110m_cultural/ne_110m_admin_0_countries.shp';  % Reemplaza con la ruta correcta
+    S = shaperead(shapefile_path);
+    
+    % Filtrar solo los datos de Estados Unidos
+    usa = S(strcmp({S.NAME}, 'United States of America'));
+    
+    % Crear la figura
+    figure;
+    hold on;
+    
+    % Mostrar el mapa de los EE.UU. de fondo
+    geoshow(usa, 'FaceColor', [0.8 0.8 0.8]);
+    
+    % Graficar las ciudades con sus coordenadas
+    for i = 1:length(ciudades_conectadas)
+        ciudad_id = ciudades_conectadas(i);
+        nombre = ciudades{ciudad_id, 1};
+        lat = ciudades{ciudad_id, 2};
+        lon = ciudades{ciudad_id, 3};
+        plot(lon, lat, 'ro');  % 'ro' para marcar las ciudades con puntos rojos
+        text(lon + 1, lat + 1, nombre, 'FontSize', 9);  % Etiquetar las ciudades
+    end
+    
+    % Conectar las ciudades en el orden especificado
+    for i = 1:length(ciudades_conectadas) - 1
+        ciudad_inicio = ciudades_conectadas(i);
+        ciudad_fin = ciudades_conectadas(i + 1);
+        lat1 = ciudades{ciudad_inicio, 2};
+        lon1 = ciudades{ciudad_inicio, 3};
+        lat2 = ciudades{ciudad_fin, 2};
+        lon2 = ciudades{ciudad_fin, 3};
+        plot([lon1 lon2], [lat1 lat2], 'b-', 'LineWidth', 2);  % Línea azul conectando las ciudades
+    end
+    
+    % Ajustes del gráfico
+    title('Ciudades Conectadas en los Estados Unidos');
+    xlabel('Longitud');
+    ylabel('Latitud');
+    xlim([-125, -65]);  % Limites de longitud para EE.UU.
+    ylim([24, 50]);     % Limites de latitud para EE.UU.
+    grid on;
+    hold off;
+
 end

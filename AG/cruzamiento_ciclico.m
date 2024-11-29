@@ -1,58 +1,51 @@
-padre1 = [4 7 1 3 9 6 5 8 2];
-padre2 = [3 9 4 2 5 6 7 1 8];
+% Padres
+padre1 = [5 3 9 8 2 1 7 4 6];
+padre2 = [3 9 5 6 4 7 1 8 2];
+% Inicialización de descendientes
+descendiente1 = zeros(1, length(padre1));
+descendiente2 = zeros(1, length(padre2));
 
+% Identificación de ciclos
+ciclo_inicial = 1; % Comienza desde el primer índice no visitado
+visitados = false(1, length(padre1)); % Marcador para posiciones visitadas
 
-ciclo = 0;
-posicion = 1;
-posiciones_visitadas = false(1, 9);
+while any(~visitados)
+    % Ciclo actual
+    ciclo_indices = [];
+    indice_actual = find(~visitados, 1); % Encuentra el primer índice no visitado
+    inicio = indice_actual; % Guarda el inicio del ciclo
 
+    % Construcción del ciclo
+    while true
+        ciclo_indices(end + 1) = indice_actual;
+        visitados(indice_actual) = true;
+        valor = padre2(indice_actual);
+        indice_actual = find(padre1 == valor);
 
-hijos1 = zeros(1, 9);
-hijos2 = zeros(1, 9);
-
-
-while true
-    % Asignar valor1 y valor2 a hijo1 e hijo2 dependiendo del ciclo
-    if ciclo == 0
-        hijo1 = padre1(posicion);
-        hijo2 = padre2(posicion);
-    else
-        hijo1 = padre2(posicion);
-        hijo2 = padre1(posicion);
-    end
-    
-    % Almacenar los valores en las listas de hijos
-    hijos1(posicion) = hijo1;
-    hijos2(posicion) = hijo2;
-    
-    % Registrar la posición como visitada
-    posiciones_visitadas(posicion) = true;
-    
-    % Verificar si todos los valores han sido visitados
-    if all(posiciones_visitadas)  % Si hemos visitado todas las posiciones
-        break;
-    end
-    
-    nueva_posicion = posicion + 1;
-    
-    % Verificar si la nueva posición ya fue visitada
-    if posiciones_visitadas(nueva_posicion)  % Si la nueva posición ya fue visitada
-        if ciclo == 0
-            ciclo = 1;
-        else
-            ciclo = 0;
+        if indice_actual == inicio
+            break;
         end
-        % Reiniciar la posición para el siguiente ciclo
-        posicion = 1;  % Regresar a la primera posición para el nuevo ciclo
-    else
-        % Si la nueva posición no fue visitada, actualizamos la posición
-        posicion = nueva_posicion;
     end
+
+    % Asignación a los descendientes según el ciclo
+    if mod(ciclo_inicial, 2) == 1 % Ciclos impares: copia de Padre 1 a Descendiente 1
+        descendiente1(ciclo_indices) = padre1(ciclo_indices);
+        descendiente2(ciclo_indices) = padre2(ciclo_indices);
+    else % Ciclos pares: intercambio de padres
+        descendiente1(ciclo_indices) = padre2(ciclo_indices);
+        descendiente2(ciclo_indices) = padre1(ciclo_indices);
+    end
+
+    % Avanzar al siguiente ciclo
+    ciclo_inicial = ciclo_inicial + 1;
 end
 
+% Rellenar las posiciones restantes
+descendiente1(descendiente1 == 0) = padre2(descendiente1 == 0);
+descendiente2(descendiente2 == 0) = padre1(descendiente2 == 0);
 
-disp('Hijo 1:');
-disp(hijos1);
-
-disp('Hijo 2:');
-disp(hijos2);
+% Mostrar resultados
+disp('Descendiente 1:');
+disp(descendiente1);
+disp('Descendiente 2:');
+disp(descendiente2);
