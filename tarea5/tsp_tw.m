@@ -316,7 +316,7 @@ function grafica(ciudades_conectadas)
     end
     
     % Ajustes del gráfico
-    title('Grafica del mejor ruta sin ventanas de tiempo');
+    title('Grafica del mejor ruta');
     xlabel('Longitud');
     ylabel('Latitud');
     xlim([-125, -65]);  % Limites de longitud para EE.UU.
