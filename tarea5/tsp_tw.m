@@ -23,33 +23,33 @@ function tsp_tw_1()
     ];
     
     % Ventanas de tiempo para cada ciudad (en horas)
-    % ventanasTiempo = [
-    %     -inf, inf;   % New York
-    %     50, 90;      % Los Angeles
-    %     15, 25;      % Chicago
-    %     30, 55;      % Houston
-    %     15, 75;      % Phoenix
-    %     5, 35;       % Philadelphia
-    %     150, 200;    % San Diego
-    %     25, 50;      % Dallas
-    %     65, 100;     % San Francisco
-    %     120, 150;    % Austin
-    %     30, 85       % Las Vegas
-    % ];
-    
     ventanasTiempo = [
-    -inf, inf;   % New York
-    -inf, inf;   % Los Angeles
-    -inf, inf;   % Chicago
-    -inf, inf;   % Houston
-    -inf, inf;   % Phoenix
-    -inf, inf;   % Philadelphia
-    -inf, inf;   % San Diego
-    -inf, inf;   % Dallas
-    -inf, inf;   % San Francisco
-    -inf, inf;   % Austin
-    -inf, inf    % Las Vegas
+        -inf, inf;   % New York
+        50, 90;      % Los Angeles
+        15, 25;      % Chicago
+        30, 55;      % Houston
+        15, 75;      % Phoenix
+        5, 35;       % Philadelphia
+        150, 200;    % San Diego
+        25, 50;      % Dallas
+        65, 100;     % San Francisco
+        120, 150;    % Austin
+        30, 85       % Las Vegas
     ];
+    
+    % ventanasTiempo = [
+    % -inf, inf;   % New York
+    % -inf, inf;   % Los Angeles
+    % -inf, inf;   % Chicago
+    % -inf, inf;   % Houston
+    % -inf, inf;   % Phoenix
+    % -inf, inf;   % Philadelphia
+    % -inf, inf;   % San Diego
+    % -inf, inf;   % Dallas
+    % -inf, inf;   % San Francisco
+    % -inf, inf;   % Austin
+    % -inf, inf    % Las Vegas
+    % ];
 
 
     %Generar población inicial
